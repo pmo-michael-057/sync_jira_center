@@ -13,9 +13,6 @@ HEADERS = {
 # ================
 # Start dynamic data
 # Config the jira account
-EMAIL = "michael@nevel.tech"
-API_TOKEN = "ATATT3xFfGF0LLojUIgPld4d-_sa-soqiRca3rWTt1_JODTbF2z7jFK6ysSMT2a-CS9f8pBXODohI9IMxgIIY3x8kuA7MZIYvatv_ggCUr8UQU2EJWQffUkfAbSy0iW5y2VS744hR8Jqs0yrRrKnNQHVFgaXd3Za_xRSA1iCYcIdfDz2m7hdtOY=098ABDFA"
-
 EMAIL = ""
 API_TOKEN = ""
 
