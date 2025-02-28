@@ -2,6 +2,7 @@
 
 import requests
 import json
+# import os
 
 JIRA_URL_CENTER = "https://nevel-tech.atlassian.net"
 
@@ -13,15 +14,20 @@ HEADERS = {
 # ================
 # Start dynamic data
 # Config the jira account
-EMAIL = ""
-API_TOKEN = ""
+# EMAIL = os.environ['EMAIL']
+# API_TOKEN = os.environ['API_TOKEN']
+EMAIL = "michael@nevel.tech"
+API_TOKEN = "ATATT3xFfGF0LLojUIgPld4d-_sa-soqiRca3rWTt1_JODTbF2z7jFK6ysSMT2a-CS9f8pBXODohI9IMxgIIY3x8kuA7MZIYvatv_ggCUr8UQU2EJWQffUkfAbSy0iW5y2VS744hR8Jqs0yrRrKnNQHVFgaXd3Za_xRSA1iCYcIdfDz2m7hdtOY=098ABDFA"
+
 
 AUTH = (EMAIL, API_TOKEN)
 
 # Edit: Tickets and Projects data output
 # ISSUELIST_INCOME = "ZCENTER-412, ZCENTER-413"
-ISSUELIST_INCOME = "ZCENTER-507, ZCENTER-522"
-PROJECT_OUTPUT = ["S2TEST011", "Z01SV"]
+ISSUELIST_INCOME = ["ZCENTER-537"]
+# PROJECT_OUTPUT = ["Z01SV02", "Z03LD02", "Z04MAY02", "Z06DB", "Z07KN02", "Z08BC02", "Z17VB", "Z21VUA"]
+# PROJECT_OUTPUT = ["Z01SV02"]
+PROJECT_OUTPUT = ["S2TEST011", "S2TEST02"]
 # End dynamic data
 # ================
 
@@ -31,11 +37,28 @@ def create_by_bulk(payload):
 
     return userStoryResponse
 
+def link_issues(centerUSKey, targetUSKey):
+    url = f"{JIRA_URL_CENTER}/rest/api/3/issueLink"
+    
+    payload = {
+        "type": {"name": "Relates"},
+        "inwardIssue": {"key": centerUSKey},
+        "outwardIssue": {"key": targetUSKey}
+    }
+
+    response = requests.post(url, headers=HEADERS, auth=AUTH, json=payload)
+
+    if response.status_code == 201:
+        print(f"✅ Linked {centerUSKey} → {targetUSKey}")
+    else:
+        print(f"❌ Failed to link {centerUSKey} → {targetUSKey}: {response.text}")
+
 def get_stories_from_center():
     url = f"{JIRA_URL_CENTER}/rest/api/3/search"
 
     # Get data from Ticket ID
-    jqlQuery = f"project = ZCENTER AND issueKey IN ({ISSUELIST_INCOME})"
+    issueKeysStr = ",".join(ISSUELIST_INCOME)
+    jqlQuery = f"project = ZCENTER AND issueKey IN ({issueKeysStr})"
     query = {
         "jql": jqlQuery,
         "maxResults": 100
@@ -99,6 +122,10 @@ def get_stories_from_center():
             else:
                 print(f"{subTaskResponse.text}")
 
+            # Link new US with Center US
+            for centerUSKey in ISSUELIST_INCOME:
+                for userStory in userStoryNewList:
+                    link_issues(centerUSKey, userStory["id"])
     else:
         print(f"Error fetching stories")
 
