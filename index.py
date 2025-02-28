@@ -24,11 +24,11 @@ AUTH = (EMAIL, API_TOKEN)
 
 # Edit: Tickets and Projects data output
 # ISSUELIST_INCOME = "ZCENTER-412, ZCENTER-413"
-ISSUELIST_INCOME = ["ZCENTER-537"]
+ISSUELIST_INCOME = ["ZCENTER-537", "ZCENTER-303", "ZCENTER-48"]
 # PROJECT_OUTPUT = ["Z01SV02", "Z03LD02", "Z04MAY02", "Z06DB", "Z07KN02", "Z08BC02", "Z17VB", "Z21VUA"]
 # PROJECT_OUTPUT = ["Z01SV02"]
-PROJECT_OUTPUT = ["S2TEST011", "S2TEST02"]
-# End dynamic data
+PROJECT_OUTPUT = ["S2TEST011", "S2TEST02","WZ400001","WZ400002","WZ400003","WZ400004","WZ400005","WZ400006"]
+# End dynamic data 
 # ================
 
 def create_by_bulk(payload):
@@ -75,7 +75,7 @@ def get_stories_from_center():
                 prepareUSPayload.append({
                     "fields": {
                         "project": {"key": project},
-                        "summary": f"{issue["fields"]["summary"]}",
+                        "summary": f"[SYNC] {issue["fields"]["summary"]}",
                         "description": issue["fields"]["description"],
                         "issuetype": {"name": "Story"}
                     }
@@ -85,13 +85,14 @@ def get_stories_from_center():
 
             userStoryResponse = create_by_bulk(payload)
             if userStoryResponse.status_code == 201:
-                print(f"Successfully created")
+                print(f"✅ Successfully created")
                 outputData = userStoryResponse.json().get("issues", [])
 
                 # Save the new UserStory Key 
                 for us in outputData:
+                    print(f"✅  A new US key: {us['key']}")
                     userStoryNewList.append({
-                        "id": us['key']
+                        "key": us['key']
                     })
             else:
                 print(f"{userStoryResponse.text}")
@@ -103,9 +104,9 @@ def get_stories_from_center():
                 {"summary": "[QC] Execute test cases"},
                 {"summary": "[QC] Verify bugs"}
             ]
-            prepareSubTaskPayload = []
+            # prepareSubTaskPayload = []
             for project in PROJECT_OUTPUT:
-                
+                prepareSubTaskPayload = []
                 for userStoryNew in userStoryNewList:
                     for subtask in subtask_list:
                         prepareSubTaskPayload.append({
@@ -113,23 +114,23 @@ def get_stories_from_center():
                                 "project": {"key": project},
                                 "summary": subtask['summary'],
                                 "issuetype": {"name": "Sub-task"},
-                                "parent": {"key": f"{userStoryNew["id"]}"}
+                                "parent": {"key": f"{userStoryNew["key"]}"}
                             }
                         })
-            subTaskResponse = create_by_bulk({"issueUpdates": prepareSubTaskPayload})
-            if userStoryResponse.status_code == 201:
-                print(f"Successfully - SubTask created")
-            else:
-                print(f"{subTaskResponse.text}")
+                subTaskResponse = create_by_bulk({"issueUpdates": prepareSubTaskPayload})
+                if userStoryResponse.status_code == 201:
+                    print(f"✅ Successfully - SubTask created")
+                else:
+                    print(f"❌ Error: {subTaskResponse.text}")
 
             # Link new US with Center US
-            for centerUSKey in ISSUELIST_INCOME:
-                for userStory in userStoryNewList:
-                    link_issues(centerUSKey, userStory["id"])
+            # for centerUSKey in ISSUELIST_INCOME:
+            #     for userStory in userStoryNewList:
+            #         link_issues(centerUSKey, userStory["key"])
     else:
-        print(f"Error fetching stories")
+        print(f"❌ Error fetching stories")
 
-    print(f"DONE")
+    print(f"✅ DONE")
 
 
 if __name__ == "__main__":
