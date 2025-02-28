@@ -5,6 +5,7 @@ import json
 # import os
 
 JIRA_URL_CENTER = "https://nevel-tech.atlassian.net"
+ZCENTER_KEY = "ZCENTER"
 
 HEADERS = {
     "Accept": "application/json",
@@ -23,11 +24,13 @@ API_TOKEN = "ATATT3xFfGF0LLojUIgPld4d-_sa-soqiRca3rWTt1_JODTbF2z7jFK6ysSMT2a-CS9
 AUTH = (EMAIL, API_TOKEN)
 
 # Edit: Tickets and Projects data output
-# ISSUELIST_INCOME = "ZCENTER-412, ZCENTER-413"
-ISSUELIST_INCOME = ["ZCENTER-537", "ZCENTER-303", "ZCENTER-48"]
-# PROJECT_OUTPUT = ["Z01SV02", "Z03LD02", "Z04MAY02", "Z06DB", "Z07KN02", "Z08BC02", "Z17VB", "Z21VUA"]
-# PROJECT_OUTPUT = ["Z01SV02"]
-PROJECT_OUTPUT = ["S2TEST011", "S2TEST02","WZ400001","WZ400002","WZ400003","WZ400004","WZ400005","WZ400006"]
+ISSUELIST_INCOME = [
+    "",
+]
+
+PROJECT_OUTPUT = [
+    "",
+]
 # End dynamic data 
 # ================
 
@@ -53,12 +56,30 @@ def link_issues(centerUSKey, targetUSKey):
     else:
         print(f"❌ Failed to link {centerUSKey} → {targetUSKey}: {response.text}")
 
-def get_stories_from_center():
+def get_epic_by_summary(summary="On-shore Requirements", project_key=""):
+    if project_key == "":
+        return None
+
+    jql_query = f'project = "{project_key}" AND issuetype = "Epic" AND summary ~ "{summary}"'
+    url = f"{JIRA_URL_CENTER}/rest/api/3/search?jql={jql_query}&maxResults=1"
+
+    response = requests.get(url, headers=HEADERS, auth=AUTH)
+
+    if response.status_code == 200:
+        issues = response.json().get("issues", [])
+        if issues:
+            return issues[0]["key"]  # Epic Key
+        else:
+            return None
+    else:
+        return None
+
+def sync_jira_center():
     url = f"{JIRA_URL_CENTER}/rest/api/3/search"
 
     # Get data from Ticket ID
     issueKeysStr = ",".join(ISSUELIST_INCOME)
-    jqlQuery = f"project = ZCENTER AND issueKey IN ({issueKeysStr})"
+    jqlQuery = f"project = {ZCENTER_KEY} AND issueKey IN ({issueKeysStr})"
     query = {
         "jql": jqlQuery,
         "maxResults": 100
@@ -69,19 +90,26 @@ def get_stories_from_center():
         # Prepare the US data
         issuesData = response.json().get("issues", [])
         for issue in issuesData:
-            prepareUSPayload = []
+            newUSPayload = []
             userStoryNewList = []
             for project in PROJECT_OUTPUT:
-                prepareUSPayload.append({
+                prepareUSPayload = {
                     "fields": {
                         "project": {"key": project},
                         "summary": f"[SYNC] {issue["fields"]["summary"]}",
                         "description": issue["fields"]["description"],
                         "issuetype": {"name": "Story"}
                     }
-                })
+                }
 
-            payload = {"issueUpdates": prepareUSPayload} 
+                # Add Epic Key to UserStory or the default value is blank.
+                requirementEpicKey = get_epic_by_summary("On-shore Requirements", project)
+                if requirementEpicKey:
+                    prepareUSPayload["fields"]["parent"] = {"key": requirementEpicKey}
+                
+                newUSPayload.append(prepareUSPayload)
+
+            payload = {"issueUpdates": newUSPayload} 
 
             userStoryResponse = create_by_bulk(payload)
             if userStoryResponse.status_code == 201:
@@ -135,7 +163,7 @@ def get_stories_from_center():
 
 if __name__ == "__main__":
     print(f"START")
-    get_stories_from_center()
+    sync_jira_center()
 
 
 
