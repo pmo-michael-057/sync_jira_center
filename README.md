@@ -1,3 +1,10 @@
+install:
+
+```
+pip install requests json
+pip install 'jira[cli]'
+```
+
 command:
 
 ```

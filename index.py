@@ -25,12 +25,33 @@ AUTH = (EMAIL, API_TOKEN)
 
 # Edit: Tickets and Projects data output
 ISSUELIST_INCOME = [
-    "",
+    "ZCENTER-542",
 ]
+# Max 11 projects
+# PROJECT_OUTPUT = [
+#     "Z01SV02",
+#     "Z03LD02",
+#     "Z04MAY02",
+#     "Z06DB",
+#     "Z07KN02",
+#     "Z08BC02",
+#     "Z17VB",
+# ]
 
 PROJECT_OUTPUT = [
-    "",
+    "Z21VUA",
+    "Z24BIG",
+    "Z27XI",
+    "Z22GREEN",
+    "Z28BIG",
+    "Z29JOB",
+    "Z31QI",
+    "Z33BU",
+    "Z34ZUN",
+    "Z35DOM",
+    "Z37GUN",
 ]
+
 # End dynamic data 
 # ================
 
@@ -117,8 +138,9 @@ def sync_jira_center():
                 outputData = userStoryResponse.json().get("issues", [])
 
                 # Save the new UserStory Key 
+                print(f"✅  New US link")
                 for us in outputData:
-                    print(f"✅  A new US key: {us['key']}")
+                    print(f"https://nevel-tech.atlassian.net/browse/{us['key']}")
                     userStoryNewList.append({
                         "key": us['key']
                     })
@@ -127,7 +149,7 @@ def sync_jira_center():
 
             # Prepare the SubTask List by the new UserStory Key
             subtask_list = [
-                {"summary": "[DES] Design UI/UX"},
+                {"summary": "[DES] Design UXUI"},
                 {"summary": "[DEV] Implement task and fix bug"},
                 {"summary": "[QC] Execute test cases"},
                 {"summary": "[QC] Verify bugs"}
@@ -152,9 +174,9 @@ def sync_jira_center():
                     print(f"❌ Error: {subTaskResponse.text}")
 
             # Link new US with Center US
-            # for centerUSKey in ISSUELIST_INCOME:
-            #     for userStory in userStoryNewList:
-            #         link_issues(centerUSKey, userStory["key"])
+            for centerUSKey in ISSUELIST_INCOME:
+                for userStory in userStoryNewList:
+                    link_issues(centerUSKey, userStory["key"])
     else:
         print(f"❌ Error fetching stories")
 
